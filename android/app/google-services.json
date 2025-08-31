@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "212473328077",
+    "project_id": "agrispace-11628",
+    "storage_bucket": "agrispace-11628.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:212473328077:android:fadef5874a1836f205d484",
+        "android_client_info": {
+          "package_name": "com.example.agri"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFhnUwWt3nDEzFYoFCKwp_zaLDSfvYPB8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
