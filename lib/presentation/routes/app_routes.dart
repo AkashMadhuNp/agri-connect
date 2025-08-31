@@ -1,4 +1,5 @@
 import 'package:agri/presentation/binding/login_binding.dart';
+import 'package:agri/presentation/binding/signup_binding.dart';
 import 'package:agri/presentation/screens/splash_screen.dart';
 import 'package:get/get.dart';
 import 'package:agri/presentation/screens/login_screen.dart';
@@ -11,7 +12,7 @@ class AppPages {
   static final routes = [
     GetPage(
       name: Routes.SPLASH,
-      page: () =>  SplashScreen(),
+      page: () => SplashScreen(),
     ),
     GetPage(
       name: Routes.LOGIN,
@@ -21,6 +22,7 @@ class AppPages {
     GetPage(
       name: Routes.SIGNUP,
       page: () => const SignupScreen(),
+      binding: SignupBinding(),  
     ),
     GetPage(
       name: Routes.MAIN,

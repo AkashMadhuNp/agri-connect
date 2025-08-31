@@ -1,192 +1,20 @@
-import 'package:agri/core/service/firebase_auth_service.dart';
-import 'package:agri/core/utils/validators.dart';
+
+import 'package:agri/presentation/controllers/signup_controllers.dart';
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:agri/presentation/widgets/applogo_title.dart';
 import 'package:agri/presentation/widgets/custom_auth_button.dart';
 import 'package:agri/presentation/widgets/custom_text_field.dart';
-import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends GetView<SignupController> {
   const SignupScreen({super.key});
-
-  @override
-  State<SignupScreen> createState() => _SignupScreenState();
-}
-
-class _SignupScreenState extends State<SignupScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-  bool _isLoading = false;
-  bool _agreeToTerms = false;
-  bool _isFetchingLocation = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _locationController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  String? _validateConfirmPassword(String? value) {
-    return ValidationUtils.validateConfirmPassword(value, _passwordController.text);
-  }
-
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isFetchingLocation = true;
-    });
-
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showErrorSnackBar('Location services are disabled. Please enable location services.');
-        setState(() {
-          _isFetchingLocation = false;
-        });
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showErrorSnackBar('Location permissions are denied');
-          setState(() {
-            _isFetchingLocation = false;
-          });
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        _showErrorSnackBar('Location permissions are permanently denied, we cannot request permissions.');
-        setState(() {
-          _isFetchingLocation = false;
-        });
-        return;
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      String locationText = '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
-      
-      setState(() {
-        _locationController.text = locationText;
-        _isFetchingLocation = false;
-      });
-
-      _showSuccessSnackBar('Location fetched successfully!');
-    } catch (e) {
-      setState(() {
-        _isFetchingLocation = false;
-      });
-      _showErrorSnackBar('Failed to get location: ${e.toString()}');
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: const Color(0xFF55DC9B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
-  }
-
-  void _handleSignup() async {
-    if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please agree to the terms and conditions'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-      return;
-    }
-
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        final result = await FirebaseAuthService.signUpWithEmailPassword(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
-          location: _locationController.text.trim(),
-          password: _passwordController.text,
-        );
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        if (result.success) {
-          _showSuccessSnackBar(result.message);
-          
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          });
-        } else {
-          _showErrorSnackBar(result.message);
-        }
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showErrorSnackBar('An unexpected error occurred. Please try again.');
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
+        height: Get.height,
+        width: Get.width,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -201,7 +29,7 @@ class _SignupScreenState extends State<SignupScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Form(
-              key: _formKey,
+              key: controller.formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -209,7 +37,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   // Back Button
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: controller.navigateBackToLogin,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -268,13 +96,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         
                         const SizedBox(height: 32),
                         
-                        // Name Field
+                        // Farm Name Field
                         CustomTextField(
                           label: 'Farm Name',
                           hint: 'Enter your Farm name',
                           prefixIcon: Icons.person_outline,
-                          controller: _nameController,
-                          validator: ValidationUtils.validateName,
+                          controller: controller.nameController,
+                          validator: controller.validateName,
                           keyboardType: TextInputType.name,
                         ),
                         
@@ -285,8 +113,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Email Address',
                           hint: 'Enter your email',
                           prefixIcon: Icons.email_outlined,
-                          controller: _emailController,
-                          validator: ValidationUtils.validateEmail,
+                          controller: controller.emailController,
+                          validator: controller.validateEmail,
                           keyboardType: TextInputType.emailAddress,
                         ),
                         
@@ -297,32 +125,35 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Phone Number',
                           hint: 'Enter your phone number',
                           prefixIcon: Icons.phone_outlined,
-                          controller: _phoneController,
-                          validator: ValidationUtils.validatePhoneNumber,
+                          controller: controller.phoneController,
+                          validator: controller.validatePhoneNumber,
                           keyboardType: TextInputType.phone,
                         ),
                         
                         const SizedBox(height: 20),
                         
+                        // Location Field with Current Location Button
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CustomTextField(
+                            Obx(() => CustomTextField(
                               label: 'Location',
                               hint: 'Enter your location or tap to fetch current location',
                               prefixIcon: Icons.location_on_outlined,
-                              controller: _locationController,
-                              validator: ValidationUtils.validateLocation,
+                              controller: controller.locationController,
+                              validator: controller.validateLocation,
                               keyboardType: TextInputType.streetAddress,
-                              readOnly: _isFetchingLocation,
-                            ),
+                              readOnly: controller.isFetchingLocation,
+                            )),
                             const SizedBox(height: 8),
                             SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _isFetchingLocation ? null : _getCurrentLocation,
-                                icon: _isFetchingLocation
-                                    ? SizedBox(
+                              child: Obx(() => ElevatedButton.icon(
+                                onPressed: controller.isFetchingLocation 
+                                    ? null 
+                                    : controller.getCurrentLocation,
+                                icon: controller.isFetchingLocation
+                                    ? const SizedBox(
                                         width: 16,
                                         height: 16,
                                         child: CircularProgressIndicator(
@@ -334,7 +165,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                       )
                                     : const Icon(Icons.my_location, size: 18),
                                 label: Text(
-                                  _isFetchingLocation 
+                                  controller.isFetchingLocation 
                                       ? 'Fetching Location...' 
                                       : 'Use Current Location',
                                 ),
@@ -347,7 +178,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ),
                                   elevation: 0,
                                 ),
-                              ),
+                              )),
                             ),
                           ],
                         ),
@@ -355,53 +186,41 @@ class _SignupScreenState extends State<SignupScreen> {
                         const SizedBox(height: 20),
                         
                         // Password Field
-                        CustomTextField(
+                        Obx(() => CustomTextField(
                           label: 'Password',
                           hint: 'Enter your password',
                           prefixIcon: Icons.lock_outline,
-                          controller: _passwordController,
-                          validator: ValidationUtils.validatePassword,
+                          controller: controller.passwordController,
+                          validator: controller.validatePassword,
                           isPassword: true,
-                          obscureText: _obscurePassword,
-                          onToggleVisibility: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
+                          obscureText: controller.obscurePassword,
+                          onToggleVisibility: controller.togglePasswordVisibility,
+                        )),
                         
                         const SizedBox(height: 20),
                         
                         // Confirm Password Field
-                        CustomTextField(
+                        Obx(() => CustomTextField(
                           label: 'Confirm Password',
                           hint: 'Confirm your password',
                           prefixIcon: Icons.lock_outline,
-                          controller: _confirmPasswordController,
-                          validator: _validateConfirmPassword,
+                          controller: controller.confirmPasswordController,
+                          validator: controller.validateConfirmPassword,
                           isPassword: true,
-                          obscureText: _obscureConfirmPassword,
-                          onToggleVisibility: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
+                          obscureText: controller.obscureConfirmPassword,
+                          onToggleVisibility: controller.toggleConfirmPasswordVisibility,
+                        )),
                         
                         const SizedBox(height: 20),
                         
                         // Terms and Conditions Checkbox
                         Row(
                           children: [
-                            Checkbox(
-                              value: _agreeToTerms,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreeToTerms = value ?? false;
-                                });
-                              },
+                            Obx(() => Checkbox(
+                              value: controller.agreeToTerms,
+                              onChanged: controller.toggleTermsAgreement,
                               activeColor: const Color(0xFF55DC9B),
-                            ),
+                            )),
                             Expanded(
                               child: Text(
                                 'I agree to the Terms and Conditions',
@@ -417,20 +236,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         const SizedBox(height: 24),
                         
                         // Signup Button
-                        CustomButton(
+                        Obx(() => CustomButton(
                           text: 'Create Account',
-                          onPressed: _handleSignup,
-                          isLoading: _isLoading,
-                        ),
+                          onPressed: controller.handleSignup,
+                          isLoading: controller.isLoading,
+                        )),
                         
                         const SizedBox(height: 24),
-                        
-                        // Divider
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Google Sign Up Button
-                        
                       ],
                     ),
                   ),
@@ -451,9 +263,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
+                          onPressed: controller.navigateBackToLogin,
                           child: const Text(
                             'Sign In',
                             style: TextStyle(

@@ -1,3 +1,4 @@
+import 'package:agri/presentation/controllers/signup_controllers.dart';
 import 'package:agri/presentation/screens/signup_screen.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -142,10 +143,10 @@ class LoginController extends GetxController {
     }
   }
   
-  // Navigate to signup
   void navigateToSignup() {
-    Get.to(() => const SignupScreen());
-  }
+  Get.lazyPut(() => SignupController());
+  Get.to(() => const SignupScreen());
+}
   
   // Email validator
   String? validateEmail(String? value) {

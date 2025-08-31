@@ -20,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2)); 
     
     if (mounted) {
-      // Use GetX navigation instead of Navigator
       Get.offNamed('/login');
     }
   }
