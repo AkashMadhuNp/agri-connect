@@ -1,150 +1,19 @@
-import 'package:agri/core/service/firebase_auth_service.dart';
-import 'package:agri/core/utils/validators.dart';
-import 'package:agri/presentation/screens/main_screen.dart';
-import 'package:agri/presentation/screens/signup_screen.dart';
+import 'package:agri/presentation/controllers/login_controller.dart';
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:agri/presentation/widgets/applogo_title.dart';
 import 'package:agri/presentation/widgets/custom_auth_button.dart';
 import 'package:agri/presentation/widgets/custom_text_field.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends GetView<LoginController> {
   const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _isLoading = false;
-  bool _rememberMe = false;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: const Color(0xFF55DC9B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-    }
-  }
-
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        // Call Firebase Auth Service
-        final result = await FirebaseAuthService.signInWithEmailPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        if (result.success) {
-          _showSuccessSnackBar(result.message);
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => MainScreen(),));
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Login Successful'),
-                  content: Text('Welcome back! User ID: ${result.user?.uid}'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            }
-          });
-        } else {
-          _showErrorSnackBar(result.message);
-        }
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showErrorSnackBar('An unexpected error occurred. Please try again.');
-      }
-    }
-  }
-
-  void _handleForgotPassword() async {
-    if (_emailController.text.trim().isEmpty) {
-      _showErrorSnackBar('Please enter your email address first');
-      return;
-    }
-
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: _emailController.text.trim(),
-      );
-      
-      _showSuccessSnackBar('Password reset email sent! Check your inbox.');
-    } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No account found with this email address.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address.';
-          break;
-        default:
-          message = 'Failed to send reset email. Please try again.';
-      }
-      _showErrorSnackBar(message);
-    } catch (e) {
-      _showErrorSnackBar('An error occurred. Please try again.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
+        height: Get.height,
+        width: Get.width,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -159,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Form(
-              key: _formKey,
+              key: controller.formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -206,34 +75,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         
                         const SizedBox(height: 32),
                         
+                        // Email Field
                         CustomTextField(
                           label: 'Email Address',
                           hint: 'Enter your email',
                           prefixIcon: Icons.email_outlined,
-                          controller: _emailController,
-                          validator: ValidationUtils.validateEmail,
+                          controller: controller.emailController,
+                          validator: controller.validateEmail,
                           keyboardType: TextInputType.emailAddress,
                         ),
                         
                         const SizedBox(height: 20),
                         
-                        CustomTextField(
+                        // Password Field
+                        Obx(() => CustomTextField(
                           label: 'Password',
                           hint: 'Enter your password',
                           prefixIcon: Icons.lock_outline,
-                          controller: _passwordController,
-                          validator: ValidationUtils.validatePassword,
+                          controller: controller.passwordController,
+                          validator: controller.validatePassword,
                           isPassword: true,
-                          obscureText: _obscurePassword,
-                          onToggleVisibility: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
+                          obscureText: controller.obscurePassword,
+                          onToggleVisibility: controller.togglePasswordVisibility,
+                        )),
                         
                         const SizedBox(height: 16),
                         
+                        // Remember Me and Forgot Password Row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -242,18 +110,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: Checkbox(
-                                    value: _rememberMe,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _rememberMe = value ?? false;
-                                      });
-                                    },
+                                  child: Obx(() => Checkbox(
+                                    value: controller.rememberMe,
+                                    onChanged: controller.toggleRememberMe,
                                     activeColor: const Color(0xFF55DC9B),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                  ),
+                                  )),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text(
@@ -267,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             TextButton(
-                              onPressed: _handleForgotPassword,
+                              onPressed: controller.handleForgotPassword,
                               child: const Text(
                                 'Forgot Password?',
                                 style: TextStyle(
@@ -282,21 +146,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         
                         const SizedBox(height: 24),
                         
-                        CustomButton(
+                        // Login Button
+                        Obx(() => CustomButton(
                           text: 'Sign In',
-                          onPressed: _handleLogin,
-                          isLoading: _isLoading,
-                        ),
+                          onPressed: controller.handleLogin,
+                          isLoading: controller.isLoading,
+                        )),
                         
                         const SizedBox(height: 24),
-                        
-                        
                       ],
                     ),
                   ),
                   
                   const SizedBox(height: 24),
                   
+                  // Sign Up Link
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -310,13 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const SignupScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: controller.navigateToSignup,
                           child: const Text(
                             'Sign Up',
                             style: TextStyle(
