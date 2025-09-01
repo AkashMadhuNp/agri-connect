@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:agri/core/service/firebase_auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,14 +13,39 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _checkAuthAndNavigate();
   }
 
-  _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 2)); 
+  _checkAuthAndNavigate() async {
+    print('Starting splash screen...');
+    
+    await Future.delayed(const Duration(seconds: 3));
     
     if (mounted) {
-      Get.offNamed('/login');
+      try {
+        final currentUser = FirebaseAuthService.currentUser;
+        
+        if (currentUser != null) {
+          if (currentUser.emailVerified) {
+            print('User is logged in and email verified, navigating to main screen...');
+            Get.offNamed('/main'); 
+          } else {
+            
+            print('User logged in but email not verified, navigating to main screen...');
+            Get.offNamed('/main'); 
+          }
+        } else {
+          
+          print('No user logged in, navigating to login screen...');
+          Get.offNamed('/login');
+        }
+        
+        print('Navigation call completed');
+      } catch (e) {
+        print('Error checking auth state: $e');
+        
+        Get.offNamed('/login');
+      }
     }
   }
 

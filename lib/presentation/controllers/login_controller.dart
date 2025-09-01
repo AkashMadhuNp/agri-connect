@@ -85,23 +85,10 @@ class LoginController extends GetxController {
       if (result.success) {
         _showSuccessSnackBar(result.message);
         
-        // Navigate to main screen
         await Future.delayed(const Duration(seconds: 1));
         Get.off(() => MainScreen());
         
-        // Show welcome dialog
-        Get.dialog(
-          AlertDialog(
-            title: const Text('Login Successful'),
-            content: Text('Welcome back! User ID: ${result.user?.uid}'),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        
       } else {
         _showErrorSnackBar(result.message);
       }
@@ -112,7 +99,6 @@ class LoginController extends GetxController {
     }
   }
   
-  // Handle forgot password
   Future<void> handleForgotPassword() async {
     if (emailController.text.trim().isEmpty) {
       _showErrorSnackBar('Please enter your email address first');
